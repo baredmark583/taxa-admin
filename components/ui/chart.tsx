@@ -108,6 +108,7 @@ const ChartTooltip = RechartsPrimitive.Tooltip
 interface ChartTooltipContentProps
   extends React.ComponentProps<"div"> {
   active?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any[]
   label?: string | number
   hideLabel?: boolean
@@ -117,12 +118,17 @@ interface ChartTooltipContentProps
   labelKey?: string
   color?: string
   labelClassName?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   labelFormatter?: (value: any, payload: any[]) => React.ReactNode
   formatter?: (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     name: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     item: any,
     index: number,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     payload: any
   ) => React.ReactNode
 }
@@ -270,6 +276,7 @@ const ChartLegend = RechartsPrimitive.Legend
 // FIX: Define explicit props for custom content components to avoid type errors from library version mismatches.
 interface ChartLegendContentProps
   extends React.ComponentProps<"div"> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any[]
   verticalAlign?: "top" | "bottom" | "middle"
   hideIcon?: boolean
@@ -329,7 +336,8 @@ function ChartLegendContent({
 // Helper to extract item config from a payload.
 function getPayloadConfigFromPayload(
   config: ChartConfig,
-  payload: unknown,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload: any,
   key: string
 ) {
   if (typeof payload !== "object" || payload === null) {
