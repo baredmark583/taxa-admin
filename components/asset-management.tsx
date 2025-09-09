@@ -79,12 +79,17 @@ export function AssetManagement() {
 
     const handleCardFaceChange = (suit: Suit, rank: Rank, value: string) => {
         if (!assets) return;
-        // FIX: The inferred type from GameAssets was too strict. By explicitly typing `newFaces`
-        // to allow partial objects for suits and ranks, we resolve the downstream error.
-        const newFaces: { [key in Suit]?: { [key in Rank]?: string } } = { ...assets.cardFaces };
-        if (!newFaces[suit]) newFaces[suit] = {};
-        newFaces[suit]![rank] = value;
-        setAssets({ ...assets, cardFaces: newFaces });
+        const newFaces = {
+            ...assets.cardFaces,
+            [suit]: {
+                ...(assets.cardFaces?.[suit] || {}),
+                [rank]: value,
+            },
+        };
+        // FIX: The type of `newFaces` may not strictly match `GameAssets['cardFaces']` if the initial
+        // `assets.cardFaces` from the API was partial. We use a type assertion to proceed,
+        // as the component logic is designed to handle this partial data, resolving the assignment error.
+        setAssets({ ...assets, cardFaces: newFaces as GameAssets['cardFaces'] });
     }
     
     const handleSlotSymbolChange = <K extends keyof GameAssets['slotSymbols'][0]>(index: number, field: K, value: GameAssets['slotSymbols'][0][K]) => {
