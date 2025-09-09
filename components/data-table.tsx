@@ -30,6 +30,10 @@ import {
   IconGripVertical,
   IconLayoutColumns,
   IconPlus,
+  IconCoin,
+  IconUserCheck,
+  IconUser,
+  IconBan,
 } from "@tabler/icons-react"
 import {
   // FIX: Use `import type` for type-only imports to resolve module not found errors.
@@ -72,6 +76,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -88,13 +93,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
-
 
 // Create a separate component for the drag handle
 function DragHandle({ id }: { id: string }) {
@@ -108,108 +106,13 @@ function DragHandle({ id }: { id: string }) {
       {...listeners}
       variant="ghost"
       size="icon"
-      className="text-muted-foreground size-7 hover:bg-transparent"
+      className="text-muted-foreground size-7 hover:bg-transparent cursor-grab"
     >
       <IconGripVertical className="text-muted-foreground size-3" />
-      <span className="sr-only">Drag to reorder</span>
+      <span className="sr-only">Перетащить</span>
     </Button>
   )
 }
-
-const columns: ColumnDef<AdminUser>[] = [
-  {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
-  {
-    id: "select",
-    header: ({ table }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: "Игрок",
-    cell: ({ row }) => {
-      return <TableCellViewer item={row.original} />
-    },
-    enableHiding: false,
-  },
-  {
-    accessorKey: "id",
-    header: "Telegram ID",
-  },
-  {
-    accessorKey: "playMoney",
-    header: "Игровые деньги",
-    cell: ({ row }) => `$${Number(row.original.playMoney).toLocaleString()}`,
-  },
-  {
-    accessorKey: "realMoney",
-    header: "Реальные деньги (TON)",
-    cell: ({ row }) => `${Number(row.original.realMoney).toFixed(4)}`,
-  },
-  {
-    accessorKey: "role",
-    header: "Роль",
-    cell: ({ row }) => {
-        const role = row.original.role;
-        const roleClass = role === 'ADMIN' ? 'bg-red-600 text-white' :
-                        role === 'MODERATOR' ? 'bg-cyan-500 text-white' :
-                        'bg-gray-600 text-gray-200';
-      return (
-        <Badge variant="outline" className={`px-2 py-1 font-semibold ${roleClass}`}>
-            {role}
-        </Badge>
-      )
-    },
-  },
-  {
-    id: "actions",
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-            size="icon"
-          >
-            <IconDotsVertical />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem>Выдать награду</DropdownMenuItem>
-          <DropdownMenuItem>Сделать модератором</DropdownMenuItem>
-          <DropdownMenuItem>Сделать игроком</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Заблокировать</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  },
-]
 
 function DraggableRow({ row }: { row: Row<AdminUser> }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
@@ -253,6 +156,12 @@ export function DataTable({
     pageIndex: 0,
     pageSize: 10,
   })
+  
+  const [isRewardModalOpen, setIsRewardModalOpen] = React.useState(false);
+  const [selectedUser, setSelectedUser] = React.useState<AdminUser | null>(null);
+  const [rewardAmount, setRewardAmount] = React.useState(1000);
+
+
   const sortableId = React.useId()
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -269,6 +178,172 @@ export function DataTable({
   React.useEffect(() => {
     setData(initialData);
   }, [initialData]);
+
+  const refreshData = async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    try {
+        const res = await fetch(`${apiUrl}/api/users`, { cache: 'no-store' });
+        if (!res.ok) throw new Error("Failed to refetch users");
+        const users = await res.json();
+        setData(users);
+        toast.success("Данные успешно обновлены!");
+    } catch (error) {
+        console.error(error);
+        toast.error("Не удалось обновить данные.");
+    }
+  };
+
+  const handleUpdateRole = async (userId: string, role: 'PLAYER' | 'MODERATOR') => {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const promise = fetch(`${apiUrl}/api/users/${userId}/role`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role }),
+      });
+
+      toast.promise(promise, {
+          loading: 'Изменение роли...',
+          success: async (res) => {
+              if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Ошибка при изменении роли.');
+              }
+              await refreshData();
+              return 'Роль успешно изменена!';
+          },
+          error: (err) => err.message,
+      });
+  };
+  
+  const handleGrantReward = async () => {
+      if (!selectedUser || rewardAmount <= 0) return;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const promise = fetch(`${apiUrl}/api/users/${selectedUser.id}/reward`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: Number(rewardAmount) }),
+      });
+
+      toast.promise(promise, {
+          loading: 'Выдача награды...',
+          success: async (res) => {
+              if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Ошибка при выдаче награды.');
+              }
+              setIsRewardModalOpen(false);
+              await refreshData();
+              return `Награда ${rewardAmount} выдана!`;
+          },
+          error: (err) => err.message,
+      });
+  };
+
+  const columns: ColumnDef<AdminUser>[] = [
+    {
+      id: "drag",
+      header: () => null,
+      cell: ({ row }) => <DragHandle id={row.original.id} />,
+    },
+    {
+      id: "select",
+      header: ({ table }) => (
+        <div className="flex items-center justify-center">
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Выбрать все"
+          />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center">
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Выбрать строку"
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: "Игрок",
+      cell: ({ row }) => <TableCellViewer item={row.original} />,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "id",
+      header: "Telegram ID",
+    },
+    {
+      accessorKey: "playMoney",
+      header: "Игровые деньги",
+      cell: ({ row }) => `$${Number(row.original.playMoney).toLocaleString()}`,
+    },
+    {
+      accessorKey: "realMoney",
+      header: "Реальные деньги (TON)",
+      cell: ({ row }) => `${Number(row.original.realMoney).toFixed(4)}`,
+    },
+    {
+      accessorKey: "role",
+      header: "Роль",
+      cell: ({ row }) => {
+          const role = row.original.role;
+          const roleClass = role === 'ADMIN' ? 'bg-red-600 text-white' :
+                          role === 'MODERATOR' ? 'bg-cyan-500 text-white' :
+                          'bg-gray-600 text-gray-200';
+        return (
+          <Badge variant="outline" className={`px-2 py-1 font-semibold ${roleClass}`}>
+              {role}
+          </Badge>
+        )
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+              size="icon"
+            >
+              <IconDotsVertical />
+              <span className="sr-only">Открыть меню</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => { setSelectedUser(row.original); setIsRewardModalOpen(true); }}>
+                <IconCoin className="mr-2 h-4 w-4" />
+                Выдать награду
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleUpdateRole(row.original.id, 'MODERATOR')}>
+                <IconUserCheck className="mr-2 h-4 w-4" />
+                Сделать модератором
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleUpdateRole(row.original.id, 'PLAYER')}>
+                <IconUser className="mr-2 h-4 w-4" />
+                Сделать игроком
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive">
+                <IconBan className="mr-2 h-4 w-4" />
+                Заблокировать
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ]
+
 
   const table = useReactTable({
     data,
@@ -307,35 +382,14 @@ export function DataTable({
   }
 
   return (
-    <Tabs
-      defaultValue="users"
+    <div
       className="w-full flex-col justify-start gap-6"
     >
-      <div className="flex items-center justify-between px-4 lg:px-6">
-        <Label htmlFor="view-selector" className="sr-only">
-          View
-        </Label>
-        <Select defaultValue="users">
-          <SelectTrigger
-            className="flex w-fit @4xl/main:hidden"
-            size="sm"
-            id="view-selector"
-          >
-            <SelectValue placeholder="Select a view" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="users">Пользователи</SelectItem>
-            <SelectItem value="assets">Ассеты</SelectItem>
-            <SelectItem value="stats">Статистика</SelectItem>
-          </SelectContent>
-        </Select>
-        <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-          <TabsTrigger value="users">Пользователи</TabsTrigger>
-          <TabsTrigger value="assets">Ассеты</TabsTrigger>
-          <TabsTrigger value="stats">
-            Статистика <Badge variant="secondary">3</Badge>
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex items-center justify-between px-4 lg:px-6 mb-4">
+        <div>
+           <h2 className="text-xl font-bold">Управление пользователями</h2>
+           <p className="text-muted-foreground text-sm">Просмотр и редактирование данных игроков</p>
+        </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -376,8 +430,7 @@ export function DataTable({
           </Button>
         </div>
       </div>
-      <TabsContent
-        value="users"
+      <div
         className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
       >
         <div className="overflow-hidden rounded-lg border">
@@ -472,7 +525,7 @@ export function DataTable({
                 onClick={() => table.setPageIndex(0)}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to first page</span>
+                <span className="sr-only">Первая страница</span>
                 <IconChevronsLeft />
               </Button>
               <Button
@@ -482,7 +535,7 @@ export function DataTable({
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to previous page</span>
+                <span className="sr-only">Предыдущая страница</span>
                 <IconChevronLeft />
               </Button>
               <Button
@@ -492,7 +545,7 @@ export function DataTable({
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to next page</span>
+                <span className="sr-only">Следующая страница</span>
                 <IconChevronRight />
               </Button>
               <Button
@@ -502,27 +555,44 @@ export function DataTable({
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to last page</span>
+                <span className="sr-only">Последняя страница</span>
                 <IconChevronsRight />
               </Button>
             </div>
           </div>
         </div>
-      </TabsContent>
-      <TabsContent
-        value="assets"
-        className="flex flex-col px-4 lg:px-6"
-      >
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed flex items-center justify-center text-muted-foreground">
-            Управление ассетами скоро появится...
-        </div>
-      </TabsContent>
-      <TabsContent value="stats" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed flex items-center justify-center text-muted-foreground">
-            Статистика скоро появится...
-        </div>
-      </TabsContent>
-    </Tabs>
+      </div>
+      
+       {/* Reward Modal using Drawer for responsiveness */}
+        <Drawer open={isRewardModalOpen} onOpenChange={setIsRewardModalOpen}>
+            <DrawerContent>
+                 <DrawerHeader className="text-left">
+                    <DrawerTitle>Выдать награду</DrawerTitle>
+                    <DrawerDescription>
+                        Выдать игровые деньги пользователю <span className="font-bold">{selectedUser?.name}</span>
+                    </DrawerDescription>
+                </DrawerHeader>
+                 <div className="px-4">
+                    <div className="flex flex-col gap-3">
+                        <Label htmlFor="rewardAmount">Сумма</Label>
+                        <Input 
+                            id="rewardAmount" 
+                            type="number" 
+                            value={rewardAmount} 
+                            onChange={(e) => setRewardAmount(Number(e.target.value))}
+                            className="p-2 bg-muted rounded-md border" 
+                        />
+                    </div>
+                </div>
+                <DrawerFooter>
+                    <Button onClick={handleGrantReward}>Подтвердить</Button>
+                    <DrawerClose asChild>
+                        <Button variant="outline">Отмена</Button>
+                    </DrawerClose>
+                </DrawerFooter>
+            </DrawerContent>
+        </Drawer>
+    </div>
   )
 }
 
@@ -545,38 +615,22 @@ function TableCellViewer({ item }: { item: AdminUser }) {
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
-          <form className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="name">Имя</Label>
-              <input id="name" defaultValue={item.name} className="p-2 bg-muted rounded-md border" />
-            </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="playMoney">Игровые деньги</Label>
-                <input id="playMoney" defaultValue={item.playMoney} type="number" className="p-2 bg-muted rounded-md border" />
+              <div className="flex flex-col gap-2">
+                <Label>Игровые деньги</Label>
+                <p className="p-2 bg-muted rounded-md border font-mono">${Number(item.playMoney).toLocaleString()}</p>
               </div>
-              <div className="flex flex-col gap-3">
-                 <Label htmlFor="realMoney">Реальные деньги</Label>
-                 <input id="realMoney" defaultValue={item.realMoney} type="number" className="p-2 bg-muted rounded-md border" />
+              <div className="flex flex-col gap-2">
+                 <Label>Реальные деньги</Label>
+                 <p className="p-2 bg-muted rounded-md border font-mono">{Number(item.realMoney).toFixed(4)} TON</p>
               </div>
             </div>
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="role">Роль</Label>
-              <Select defaultValue={item.role}>
-                <SelectTrigger id="role" className="w-full">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PLAYER">Игрок</SelectItem>
-                  <SelectItem value="MODERATOR">Модератор</SelectItem>
-                  <SelectItem value="ADMIN">Администратор</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex flex-col gap-2">
+              <Label>Роль</Label>
+              <p className="p-2 bg-muted rounded-md border">{item.role}</p>
             </div>
-          </form>
         </div>
         <DrawerFooter>
-          <Button onClick={() => toast.success('Изменения сохранены!')}>Сохранить</Button>
           <DrawerClose asChild>
             <Button variant="outline">Закрыть</Button>
           </DrawerClose>

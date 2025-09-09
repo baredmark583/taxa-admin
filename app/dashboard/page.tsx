@@ -1,5 +1,6 @@
+
 import { AppSidebar } from "@/components/app-sidebar"
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
+import { ChartRichestPlayers } from "@/components/chart-richest-players"
 import { DataTable } from "@/components/data-table"
 import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
@@ -8,6 +9,8 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { AdminUser } from "@/types"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AssetManagement } from "@/components/asset-management"
 
 // Fetch data from the game server API
 async function getUsers(): Promise<AdminUser[]> {
@@ -46,15 +49,27 @@ export default async function Page() {
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <SectionCards />
-              <div className="px-4 lg:px-6">
-                <ChartAreaInteractive />
-              </div>
-              <DataTable data={userData} />
+          <Tabs defaultValue="dashboard" className="flex flex-1 flex-col gap-2 @container/main">
+            <div className="flex items-center justify-between px-4 py-4 lg:px-6 lg:py-6">
+                 <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
+                    <TabsTrigger value="dashboard">Дашборд</TabsTrigger>
+                    <TabsTrigger value="users">Пользователи</TabsTrigger>
+                    <TabsTrigger value="assets">Ассеты</TabsTrigger>
+                </TabsList>
             </div>
-          </div>
+            <TabsContent value="dashboard" className="flex flex-1 flex-col gap-4">
+                <SectionCards users={userData} />
+                <div className="px-4 lg:px-6">
+                    <ChartRichestPlayers users={userData} />
+                </div>
+            </TabsContent>
+            <TabsContent value="users" className="flex flex-1 flex-col">
+                <DataTable data={userData} />
+            </TabsContent>
+            <TabsContent value="assets" className="flex flex-1 flex-col">
+                <AssetManagement />
+            </TabsContent>
+          </Tabs>
         </div>
       </SidebarInset>
     </SidebarProvider>

@@ -1,101 +1,89 @@
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
+import { IconTrendingUp, IconUser, IconPigMoney, IconCrown } from "@tabler/icons-react"
 
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
-  CardAction,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { AdminUser } from "@/types";
+import React from "react";
 
-export function SectionCards() {
+interface SectionCardsProps {
+    users: AdminUser[];
+}
+
+export function SectionCards({ users }: SectionCardsProps) {
+  const stats = React.useMemo(() => {
+    if (!users || users.length === 0) {
+      return {
+        totalRealMoney: 0,
+        totalUsers: 0,
+        totalPlayMoney: 0,
+        richestPlayer: { name: 'N/A', playMoney: 0 },
+      };
+    }
+
+    const totalRealMoney = users.reduce((sum, user) => sum + user.realMoney, 0);
+    const totalPlayMoney = users.reduce((sum, user) => sum + user.playMoney, 0);
+    const richestPlayer = users.reduce((max, user) => user.playMoney > max.playMoney ? user : max, users[0]);
+    
+    return {
+      totalRealMoney,
+      totalUsers: users.length,
+      totalPlayMoney,
+      richestPlayer,
+    };
+  }, [users]);
+
+
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Total Revenue</CardDescription>
+          <CardDescription>Общий баланс (TON)</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            $1,250.00
+            {stats.totalRealMoney.toFixed(4)}
           </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
-            </Badge>
-          </CardAction>
+           <div className="absolute top-4 right-4 text-muted-foreground">
+             <IconTrendingUp size={28}/>
+           </div>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Visitors for the last 6 months
-          </div>
-        </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>New Customers</CardDescription>
+          <CardDescription>Всего игроков</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            1,234
+            {stats.totalUsers}
           </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingDown />
-              -20%
-            </Badge>
-          </CardAction>
+           <div className="absolute top-4 right-4 text-muted-foreground">
+             <IconUser size={28}/>
+           </div>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Down 20% this period <IconTrendingDown className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Acquisition needs attention
-          </div>
-        </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Active Accounts</CardDescription>
+          <CardDescription>В игре (Play Money)</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            45,678
+            ${stats.totalPlayMoney.toLocaleString()}
           </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
-            </Badge>
-          </CardAction>
+          <div className="absolute top-4 right-4 text-muted-foreground">
+             <IconPigMoney size={28}/>
+           </div>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
-        </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Growth Rate</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            4.5%
+          <CardDescription>Самый богатый игрок</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl truncate">
+            {stats.richestPlayer.name}
           </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +4.5%
-            </Badge>
-          </CardAction>
+          <p className="text-muted-foreground text-sm">${stats.richestPlayer.playMoney.toLocaleString()}</p>
+           <div className="absolute top-4 right-4 text-muted-foreground">
+             <IconCrown size={28}/>
+           </div>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Steady performance increase <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Meets growth projections</div>
-        </CardFooter>
       </Card>
     </div>
   )
