@@ -26,7 +26,7 @@ const data = {
   user: {
     name: "Администратор",
     email: "admin@cryptopoker.club",
-    avatar: "/avatars/shadcn.jpg",
+    avatar: "/next.svg",
   },
   navMain: [
     {
