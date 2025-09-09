@@ -5,18 +5,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Rank, Suit, SlotSymbol } from '@/types'; // Assuming types are shared
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Rank, Suit, GameAssets, IconAssets } from '@/types';
 import { IconDeviceFloppy, IconRefresh, IconTrash, IconPlus } from '@tabler/icons-react';
-
-// Define the shape of your assets
-interface GameAssets {
-  cardBackUrl: string;
-  tableBackgroundUrl: string;
-  godModePassword: string;
-  cardFaces: { [suit in Suit]?: { [rank in Rank]?: string } };
-  slotSymbols: SlotSymbol[];
-}
 
 const suitOrder: Suit[] = [Suit.SPADES, Suit.HEARTS, Suit.CLUBS, Suit.DIAMONDS];
 const rankOrder: Rank[] = [Rank.ACE, Rank.KING, Rank.QUEEN, Rank.JACK, Rank.TEN, Rank.NINE, Rank.EIGHT, Rank.SEVEN, Rank.SIX, Rank.FIVE, Rank.FOUR, Rank.THREE, Rank.TWO];
@@ -88,22 +79,23 @@ export function AssetManagement() {
 
     const handleCardFaceChange = (suit: Suit, rank: Rank, value: string) => {
         if (!assets) return;
-        const newFaces = { ...assets.cardFaces };
+        // FIX: Explicitly type `newFaces` to prevent incorrect type inference.
+        const newFaces: GameAssets['cardFaces'] = { ...assets.cardFaces };
         if (!newFaces[suit]) newFaces[suit] = {};
         newFaces[suit]![rank] = value;
         setAssets({ ...assets, cardFaces: newFaces });
     }
     
-    const handleSlotSymbolChange = <K extends keyof SlotSymbol>(index: number, field: K, value: SlotSymbol[K]) => {
+    const handleSlotSymbolChange = <K extends keyof GameAssets['slotSymbols'][0]>(index: number, field: K, value: GameAssets['slotSymbols'][0][K]) => {
         if (!assets) return;
         const newSymbols = [...assets.slotSymbols];
-        newSymbols[index][field] = value;
+        newSymbols[index] = { ...newSymbols[index], [field]: value };
         setAssets({ ...assets, slotSymbols: newSymbols });
     };
     
     const addSlotSymbol = () => {
         if (!assets) return;
-        const newSymbol: SlotSymbol = { name: 'NEW', imageUrl: '', payout: 10, weight: 1 };
+        const newSymbol: GameAssets['slotSymbols'][0] = { name: 'NEW', imageUrl: '', payout: 10, weight: 1 };
         setAssets({ ...assets, slotSymbols: [...assets.slotSymbols, newSymbol] });
     }
     
@@ -112,6 +104,24 @@ export function AssetManagement() {
         const newSymbols = assets.slotSymbols.filter((_, i) => i !== index);
         setAssets({ ...assets, slotSymbols: newSymbols });
     }
+    
+    const iconFields: { key: keyof IconAssets; label: string }[] = [
+        { key: 'iconFavicon', label: 'Favicon' },
+        { key: 'iconManifest', label: 'TON Manifest Icon' },
+        { key: 'iconCrypto', label: 'Crypto Icon (TON)' },
+        { key: 'iconPlayMoney', label: 'Play Money Icon' },
+        { key: 'iconExit', label: 'Exit/Lobby Icon' },
+        { key: 'iconSettings', label: 'Settings Icon' },
+        { key: 'iconUsers', label: 'Users Icon' },
+        { key: 'iconDealerChip', label: 'Dealer Chip Icon' },
+        { key: 'iconPokerChip', label: 'Poker Chip Icon' },
+        { key: 'iconSlotMachine', label: 'Slot Machine Icon' },
+        { key: 'iconRoulette', label: 'Roulette Icon' },
+        { key: 'iconFold', label: 'Fold Action Icon' },
+        { key: 'iconCall', label: 'Call/Check Action Icon' },
+        { key: 'iconRaise', label: 'Raise/Bet Action Icon' },
+    ];
+
 
     if (isLoading) {
         return <div className="p-6 text-center">Загрузка ассетов...</div>;
@@ -149,6 +159,21 @@ export function AssetManagement() {
                         <Label htmlFor="godModePassword">Пароль &quot;Режима бога&quot;</Label>
                         <Input id="godModePassword" value={assets.godModePassword} onChange={e => handleInputChange('godModePassword', e.target.value)} />
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                 <CardHeader>
+                    <CardTitle>Управление иконками</CardTitle>
+                    <CardDescription>Вставьте URL иконок с <a href="https://icon-sets.iconify.design/" target="_blank" rel="noopener noreferrer" className="text-primary underline">Iconify</a> или любого другого источника.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                     {iconFields.map(({ key, label }) => (
+                        <div key={key} className="space-y-2">
+                            <Label htmlFor={key}>{label}</Label>
+                            <Input id={key} value={assets[key]} onChange={e => handleInputChange(key, e.target.value)} />
+                        </div>
+                    ))}
                 </CardContent>
             </Card>
 

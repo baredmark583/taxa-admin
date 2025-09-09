@@ -40,3 +40,28 @@ export interface SlotSymbol {
   payout: number;
   weight: number;
 }
+
+export interface IconAssets {
+    iconFavicon: string;
+    iconManifest: string;
+    iconCrypto: string;
+    iconPlayMoney: string;
+    iconExit: string;
+    iconSettings: string;
+    iconUsers: string;
+    iconDealerChip: string;
+    iconPokerChip: string;
+    iconSlotMachine: string;
+    iconRoulette: string;
+    iconFold: string;
+    iconCall: string;
+    iconRaise: string;
+}
+
+export interface GameAssets extends IconAssets {
+  cardBackUrl: string;
+  tableBackgroundUrl: string;
+  godModePassword: string;
+  cardFaces: { [suit in Suit]?: { [rank in Rank]?: string } };
+  slotSymbols: SlotSymbol[];
+}
