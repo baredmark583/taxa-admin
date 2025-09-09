@@ -1,4 +1,5 @@
 
+
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartRichestPlayers } from "@/components/chart-richest-players"
 import { DataTable } from "@/components/data-table"
@@ -14,12 +15,17 @@ import { AssetManagement } from "@/components/asset-management"
 
 // Fetch data from the game server API
 async function getUsers(): Promise<AdminUser[]> {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    // Prioritize the internal URL for server-side rendering to leverage Render's private network.
+    // Fall back to the public URL for broader compatibility (e.g., local development).
+    const apiUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL;
     if (!apiUrl) {
-        console.error("API URL is not configured. Please set NEXT_PUBLIC_API_URL environment variable.");
+        console.error("API URL is not configured. Please set INTERNAL_API_URL or NEXT_PUBLIC_API_URL environment variable.");
         return [];
     }
     try {
+        // The `fetch` call here runs on the server during SSR.
+        // Using the internal URL avoids slow public network requests between services,
+        // preventing timeouts and improving initial load performance.
         const res = await fetch(`${apiUrl}/api/users`, { cache: 'no-store' }); // Disable caching for fresh data
         if (!res.ok) {
             throw new Error(`Failed to fetch users: ${res.statusText}`);
@@ -27,7 +33,7 @@ async function getUsers(): Promise<AdminUser[]> {
         const users = await res.json();
         return users;
     } catch (error) {
-        console.error(error);
+        console.error("Error fetching users in admin dashboard:", error);
         return []; // Return empty array on error
     }
 }
