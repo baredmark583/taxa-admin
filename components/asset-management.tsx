@@ -94,16 +94,12 @@ export function AssetManagement() {
         setAssets({ ...assets, cardFaces: newFaces });
     }
     
-    const handleSlotSymbolChange = (index: number, field: keyof SlotSymbol, value: string | number) => {
+    const handleSlotSymbolChange = <K extends keyof SlotSymbol>(index: number, field: K, value: SlotSymbol[K]) => {
         if (!assets) return;
         const newSymbols = [...assets.slotSymbols];
-        // FIX: Replaced the failing type assertion with `as any` to allow for dynamic
-        // property assignment. TypeScript cannot verify the type safety of assigning
-        // a `string | number` value to a property accessed by a dynamic key
-        // (`field`), so we must bypass the type checker for this operation.
-        (newSymbols[index] as any)[field] = value;
+        newSymbols[index][field] = value;
         setAssets({ ...assets, slotSymbols: newSymbols });
-    }
+    };
     
     const addSlotSymbol = () => {
         if (!assets) return;
