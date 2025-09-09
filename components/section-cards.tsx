@@ -1,6 +1,5 @@
 import { IconTrendingUp, IconUser, IconPigMoney, IconCrown } from "@tabler/icons-react"
 
-import { Badge } from "@/components/ui/badge"
 import {
   Card,
   CardDescription,

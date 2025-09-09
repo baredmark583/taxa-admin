@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,7 @@ export function AssetManagement() {
     const [isLoading, setIsLoading] = useState(true);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-    const fetchAssets = async () => {
+    const fetchAssets = useCallback(async () => {
         setIsLoading(true);
         try {
             const res = await fetch(`${apiUrl}/api/assets`);
@@ -39,11 +39,11 @@ export function AssetManagement() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [apiUrl]);
 
     useEffect(() => {
         fetchAssets();
-    }, []);
+    }, [fetchAssets]);
 
     const handleSave = () => {
         const promise = fetch(`${apiUrl}/api/assets`, {
@@ -97,6 +97,10 @@ export function AssetManagement() {
     const handleSlotSymbolChange = (index: number, field: keyof SlotSymbol, value: string | number) => {
         if (!assets) return;
         const newSymbols = [...assets.slotSymbols];
+        // FIX: Replaced the failing type assertion with `as any` to allow for dynamic
+        // property assignment. TypeScript cannot verify the type safety of assigning
+        // a `string | number` value to a property accessed by a dynamic key
+        // (`field`), so we must bypass the type checker for this operation.
         (newSymbols[index] as any)[field] = value;
         setAssets({ ...assets, slotSymbols: newSymbols });
     }
@@ -146,7 +150,7 @@ export function AssetManagement() {
                         <Input id="cardBackUrl" value={assets.cardBackUrl} onChange={e => handleInputChange('cardBackUrl', e.target.value)} />
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="godModePassword">Пароль "Режима бога"</Label>
+                        <Label htmlFor="godModePassword">Пароль &quot;Режима бога&quot;</Label>
                         <Input id="godModePassword" value={assets.godModePassword} onChange={e => handleInputChange('godModePassword', e.target.value)} />
                     </div>
                 </CardContent>
