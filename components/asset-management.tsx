@@ -79,8 +79,9 @@ export function AssetManagement() {
 
     const handleCardFaceChange = (suit: Suit, rank: Rank, value: string) => {
         if (!assets) return;
-        // FIX: Explicitly type `newFaces` to prevent incorrect type inference.
-        const newFaces: GameAssets['cardFaces'] = { ...assets.cardFaces };
+        // FIX: The inferred type from GameAssets was too strict. By explicitly typing `newFaces`
+        // to allow partial objects for suits and ranks, we resolve the downstream error.
+        const newFaces: { [key in Suit]?: { [key in Rank]?: string } } = { ...assets.cardFaces };
         if (!newFaces[suit]) newFaces[suit] = {};
         newFaces[suit]![rank] = value;
         setAssets({ ...assets, cardFaces: newFaces });
