@@ -6,7 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { AdminUser } from "@/types";
+// FIX: Changed alias path to relative path to fix module resolution error.
+import { AdminUser } from "../types";
 import React from "react";
 
 interface SectionCardsProps {

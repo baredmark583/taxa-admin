@@ -1,5 +1,6 @@
 
 
+
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartRichestPlayers } from "@/components/chart-richest-players"
 import { DataTable } from "@/components/data-table"
@@ -9,7 +10,8 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { AdminUser } from "@/types"
+// FIX: Changed alias path to relative path to fix module resolution error.
+import { AdminUser } from "../types"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AssetManagement } from "@/components/asset-management"
 

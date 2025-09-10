@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Rank, Suit, GameAssets, IconAssets } from '@/types';
+// FIX: Changed alias path to relative path to fix module resolution error.
+import { Rank, Suit, GameAssets, IconAssets } from '../types';
 import { IconDeviceFloppy, IconRefresh, IconTrash, IconPlus } from '@tabler/icons-react';
 
 const suitOrder: Suit[] = [Suit.SPADES, Suit.HEARTS, Suit.CLUBS, Suit.DIAMONDS];
@@ -175,9 +176,9 @@ export function AssetManagement() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                      {iconFields.map(({ key, label }) => (
-                        <div key={key} className="space-y-2">
-                            <Label htmlFor={key}>{label}</Label>
-                            <Input id={key} value={assets[key]} onChange={e => handleInputChange(key, e.target.value)} />
+                        <div key={key as string} className="space-y-2">
+                            <Label htmlFor={key as string}>{label}</Label>
+                            <Input id={key as string} value={assets[key]} onChange={e => handleInputChange(key, e.target.value)} />
                         </div>
                     ))}
                 </CardContent>

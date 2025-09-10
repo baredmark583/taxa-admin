@@ -54,7 +54,8 @@ import {
 import { toast } from "sonner"
 
 import { useIsMobile } from "@/hooks/use-mobile"
-import { AdminUser } from "@/types"
+// FIX: Changed alias path to relative path to fix module resolution error.
+import { AdminUser } from "../types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"

@@ -16,7 +16,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { AdminUser } from "@/types"
+// FIX: Changed alias path to relative path to fix module resolution error.
+import { AdminUser } from "../types"
 
 const chartConfig = {
   playMoney: {
