@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartRichestPlayers } from "@/components/chart-richest-players"
 import { DataTable } from "@/components/data-table"
@@ -11,41 +11,61 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AdminUser } from "../../types"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AssetManagement } from "@/components/asset-management"
+import { Skeleton } from "@/components/ui/skeleton"
 
-// The data fetching part remains separate and can be called from a server component wrapper if needed.
-// For simplicity in this structure, we assume data is fetched and passed as props.
 async function getUsers(): Promise<AdminUser[]> {
-  const apiUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL
+  // This now runs on the client, so it MUST use NEXT_PUBLIC_API_URL.
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
-    console.error(
-      "API URL is not configured. Please set INTERNAL_API_URL or NEXT_PUBLIC_API_URL environment variable."
-    )
-    return []
+    console.error("API URL is not configured. Please set NEXT_PUBLIC_API_URL environment variable.");
+    return [];
   }
   try {
-    const res = await fetch(`${apiUrl}/api/users`, { cache: "no-store" })
+    const res = await fetch(`${apiUrl}/api/users`, { cache: "no-store" });
     if (!res.ok) {
-      throw new Error(`Failed to fetch users: ${res.statusText}`)
+      throw new Error(`Failed to fetch users: ${res.statusText}`);
     }
-    return await res.json()
+    return await res.json();
   } catch (error) {
-    console.error("Error fetching users in admin dashboard:", error)
-    return []
+    console.error("Error fetching users in admin dashboard:", error);
+    return [];
   }
 }
 
-// A new wrapper component to keep the main page as a Server Component for data fetching
-export default async function Page() {
-    const userData = await getUsers();
-    
-    // We pass the server-fetched data to the interactive client component.
-    return <DashboardPage initialUsers={userData} />
-}
+export default function DashboardPage() {
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [users, setUsers] = useState<AdminUser[] | null>(null);
 
+  useEffect(() => {
+    getUsers().then(setUsers);
+  }, []);
 
-// This is the main client component that handles state and interactivity.
-function DashboardPage({ initialUsers }: { initialUsers: AdminUser[] }) {
-  const [activeTab, setActiveTab] = useState("dashboard")
+  if (!users) {
+     return (
+        <SidebarProvider
+            style={
+                {
+                "--sidebar-width": "calc(var(--spacing) * 72)",
+                "--header-height": "calc(var(--spacing) * 12)",
+                } as React.CSSProperties
+            }
+            >
+            <AppSidebar variant="inset" activeTab={"dashboard"} onTabChange={setActiveTab} />
+            <SidebarInset>
+                <SiteHeader />
+                <div className="p-4 lg:p-6 space-y-4">
+                    <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+                        <Skeleton className="h-32" />
+                        <Skeleton className="h-32" />
+                        <Skeleton className="h-32" />
+                        <Skeleton className="h-32" />
+                    </div>
+                    <Skeleton className="h-96" />
+                </div>
+            </SidebarInset>
+        </SidebarProvider>
+    );
+  }
   
   return (
     <SidebarProvider
@@ -77,13 +97,13 @@ function DashboardPage({ initialUsers }: { initialUsers: AdminUser[] }) {
               </TabsList>
             </div>
             <TabsContent value="dashboard" className="flex flex-1 flex-col gap-4">
-              <SectionCards users={initialUsers} />
+              <SectionCards users={users} />
               <div className="px-4 lg:px-6">
-                <ChartRichestPlayers users={initialUsers} />
+                <ChartRichestPlayers users={users} />
               </div>
             </TabsContent>
             <TabsContent value="users" className="flex flex-1 flex-col">
-              <DataTable data={initialUsers} />
+              <DataTable data={users} />
             </TabsContent>
             <TabsContent value="assets" className="flex flex-1 flex-col">
               <AssetManagement />
