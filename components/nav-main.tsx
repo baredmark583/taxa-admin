@@ -1,3 +1,4 @@
+
 "use client"
 
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
@@ -13,12 +14,17 @@ import {
 
 export function NavMain({
   items,
+  activeTab,
+  onTabChange,
 }: {
   items: {
     title: string
-    url: string
+    url?: string
+    value?: string
     icon?: Icon
   }[]
+  activeTab?: string
+  onTabChange?: (tab: string) => void
 }) {
   return (
     <SidebarGroup>
@@ -45,7 +51,12 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
+              <SidebarMenuButton 
+                tooltip={item.title}
+                isActive={activeTab === item.value}
+                onClick={() => item.value && onTabChange?.(item.value)}
+                disabled={!item.value}
+              >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
               </SidebarMenuButton>

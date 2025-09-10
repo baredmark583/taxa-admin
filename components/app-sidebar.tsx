@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -31,33 +32,38 @@ const data = {
   navMain: [
     {
       title: "Дашборд",
-      url: "#",
+      value: "dashboard",
       icon: IconDashboard,
     },
     {
       title: "Пользователи",
-      url: "#",
+      value: "users",
       icon: IconUsers,
     },
     {
       title: "Аналитика",
-      url: "#",
+      // No value, will be disabled
       icon: IconChartBar,
     },
      {
       title: "Ассеты",
-      url: "#",
+      value: "assets",
       icon: IconPhoto,
     },
     {
       title: "Логи",
-      url: "#",
+      // No value, will be disabled
       icon: IconFileDescription,
     },
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+    activeTab?: string;
+    onTabChange?: (tab: string) => void;
+}
+
+export function AppSidebar({ activeTab, onTabChange, ...props }: AppSidebarProps) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -75,7 +81,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} activeTab={activeTab} onTabChange={onTabChange} />
          <SidebarMenu className="mt-auto">
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
