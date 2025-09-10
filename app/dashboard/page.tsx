@@ -1,6 +1,4 @@
-
-
-
+export const dynamic = 'force-dynamic';
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartRichestPlayers } from "@/components/chart-richest-players"
