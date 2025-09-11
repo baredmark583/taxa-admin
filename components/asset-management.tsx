@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 // FIX: Changed alias path to relative path to fix module resolution error.
-import { Rank, Suit, GameAssets, IconAssets } from '../types';
+import { Rank, Suit, GameAssets, IconAssets, LotteryPrize } from '../types';
 import { IconDeviceFloppy, IconRefresh, IconTrash, IconPlus } from '@tabler/icons-react';
 
 const suitOrder: Suit[] = [Suit.SPADES, Suit.HEARTS, Suit.CLUBS, Suit.DIAMONDS];
@@ -73,7 +73,7 @@ export function AssetManagement() {
         });
     };
     
-    const handleInputChange = (field: keyof GameAssets, value: string) => {
+    const handleInputChange = (field: keyof GameAssets, value: string | number) => {
         if (!assets) return;
         setAssets({ ...assets, [field]: value });
     };
@@ -98,6 +98,30 @@ export function AssetManagement() {
         const newSymbols = [...assets.slotSymbols];
         newSymbols[index] = { ...newSymbols[index], [field]: value };
         setAssets({ ...assets, slotSymbols: newSymbols });
+    };
+
+    const handleLotteryPrizeChange = (
+        prizeType: 'lotteryPrizesPlayMoney' | 'lotteryPrizesRealMoney',
+        index: number, 
+        field: keyof LotteryPrize, 
+        value: string | number
+    ) => {
+        if (!assets) return;
+        const newPrizes = [...assets[prizeType]];
+        newPrizes[index] = { ...newPrizes[index], [field]: value };
+        setAssets({ ...assets, [prizeType]: newPrizes });
+    };
+
+    const addLotteryPrize = (prizeType: 'lotteryPrizesPlayMoney' | 'lotteryPrizesRealMoney') => {
+        if (!assets) return;
+        const newPrize: LotteryPrize = { label: 'New Prize', multiplier: 100, weight: 10 };
+        setAssets({ ...assets, [prizeType]: [...assets[prizeType], newPrize] });
+    };
+    
+    const removeLotteryPrize = (prizeType: 'lotteryPrizesPlayMoney' | 'lotteryPrizesRealMoney', index: number) => {
+        if (!assets) return;
+        const newPrizes = assets[prizeType].filter((_, i) => i !== index);
+        setAssets({ ...assets, [prizeType]: newPrizes });
     };
     
     const addSlotSymbol = () => {
@@ -127,6 +151,7 @@ export function AssetManagement() {
         { key: 'iconFold', label: 'Fold Action Icon' },
         { key: 'iconCall', label: 'Call/Check Action Icon' },
         { key: 'iconRaise', label: 'Raise/Bet Action Icon' },
+        { key: 'iconBank', label: 'Bank Icon' },
     ];
 
 
@@ -181,6 +206,52 @@ export function AssetManagement() {
                             <Input id={key as string} value={assets[key]} onChange={e => handleInputChange(key, e.target.value)} />
                         </div>
                     ))}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader><CardTitle>Настройки лотереи</CardTitle></CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="lotteryTicketPricePlayMoney">Цена билета (Play Money)</Label>
+                            <Input id="lotteryTicketPricePlayMoney" type="number" value={assets.lotteryTicketPricePlayMoney} onChange={e => handleInputChange('lotteryTicketPricePlayMoney', Number(e.target.value))} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="lotteryTicketPriceRealMoney">Цена билета (Real Money - TON)</Label>
+                            <Input id="lotteryTicketPriceRealMoney" type="number" step="0.01" value={assets.lotteryTicketPriceRealMoney} onChange={e => handleInputChange('lotteryTicketPriceRealMoney', Number(e.target.value))} />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {([
+                            { type: 'lotteryPrizesPlayMoney', title: 'Призы - Easy (Play Money)' },
+                            { type: 'lotteryPrizesRealMoney', title: 'Призы - Hard (Real Money)' }
+                        ] as const).map(({ type, title }) => (
+                            <div key={type} className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="font-semibold">{title}</h4>
+                                    <Button size="sm" onClick={() => addLotteryPrize(type)}><IconPlus className="mr-2 h-4 w-4"/> Добавить</Button>
+                                </div>
+                                {assets[type]?.map((prize, index) => (
+                                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-2 border rounded-lg items-end">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Название</Label>
+                                            <Input value={prize.label} onChange={e => handleLotteryPrizeChange(type, index, 'label', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Множитель (%)</Label>
+                                            <Input type="number" value={prize.multiplier} onChange={e => handleLotteryPrizeChange(type, index, 'multiplier', Number(e.target.value))} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Вес (шанс)</Label>
+                                            <Input type="number" value={prize.weight} onChange={e => handleLotteryPrizeChange(type, index, 'weight', Number(e.target.value))} />
+                                        </div>
+                                        <Button size="icon" variant="destructive" onClick={() => removeLotteryPrize(type, index)}><IconTrash size={16} /></Button>
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
                 </CardContent>
             </Card>
 
