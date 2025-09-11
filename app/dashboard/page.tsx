@@ -105,7 +105,7 @@ export default function DashboardPage() {
             <TabsContent value="users" className="flex flex-1 flex-col">
               <DataTable data={users} />
             </TabsContent>
-            <TabsContent value="assets" className="flex flex-1 flex-col">
+            <TabsContent value="assets" className="flex flex-1 flex-col min-h-0">
               <AssetManagement />
             </TabsContent>
           </Tabs>

@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -164,7 +165,7 @@ export function AssetManagement() {
     }
 
     return (
-        <div className="p-4 lg:p-6 space-y-6">
+        <div className="p-4 lg:p-6 space-y-6 overflow-y-auto">
             <div className="flex justify-between items-center">
                 <div>
                     <h2 className="text-xl font-bold">Управление ассетами</h2>
